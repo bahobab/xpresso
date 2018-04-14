@@ -13,10 +13,13 @@ const db = new sqlite3.Database(process.env.TEST_DATABASE || './database.sqlite'
     }
 });
 
-employeeRouter.get('/', (req, res, next) => {
-    const query = 'SELECT * FROM Employee WHERE is_current_employee='+1+';';
-    dbUtils.getAll('employees', query, req, res, next);
+dbUtils.getAll(employeeRouter, '/', 'employees', 'Employee', 'is_current_employee', 1);
 
+dbUtils.routerParam(employeeRouter, 'Employee', 'employee');
+
+employeeRouter.get('/:id', (req, res,next) => {
+    res.status(200).json({employee:req.employee})
 });
+
 
 module.exports = employeeRouter;
