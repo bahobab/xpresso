@@ -5,11 +5,13 @@ const bodyParser = require('bodyParser');
 const morgan = require('morgan');
 const errorHandler = require('errorhandler');
 
+const apiRouter = require('./api/api');
+
 const app = express();
 
 app.use(cors());
 app.use(bodyParser.json());
-
+app.use('/api', apiRouter);
 app.use(morgan('dev'));
 app.use(errorHandler());
 
