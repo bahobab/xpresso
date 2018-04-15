@@ -72,5 +72,19 @@ employeeRouter.put('/:id', (req, res, next) => {
     dbUtils.updateOne('employee', 'Employee', 'id', query, values, res, next);
 });
 
+employeeRouter.delete('/:id', (req, res, next) => {
+    const employeeId = Number(req.params.id);
+    const query = `UPDATE Employee
+                        SET 
+                        is_current_employee=$ice
+                                WHERE
+                                    id=$id;`;
+    const values = {
+        $id: employeeId,
+        $ice: 0
+    };
+
+    dbUtils.updateOne('employee', 'Employee', 'id', query, values, res, next);
+});
 
 module.exports = employeeRouter;
