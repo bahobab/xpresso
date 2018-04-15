@@ -1,15 +1,18 @@
 const express = require('express');
 const employeeRouter = express.Router();
+const sqlite3 = require('sqlite3');
 
 const dbUtils = require('./dbUtils');
 
-const sqlite3 = require('sqlite3');
+const timesheetRouter = require('./timesheet');
+employeeRouter.use('/:employeeId/timesheets', timesheetRouter);
+
 
 const db = new sqlite3.Database(process.env.TEST_DATABASE || './database.sqlite', (err) => {
     if (err) {
         console.log('Error connecting to database...');
     } else {
-        console.log('Successfully connected to in-memory database');
+        console.log('Successfully connected to in-memory database - Employee');
     }
 });
 
