@@ -21,5 +21,28 @@ employeeRouter.get('/:id', (req, res,next) => {
     res.status(200).json({employee:req.employee})
 });
 
+employeeRouter.post('/', (req, res, next) => {
+    // console.log('>>>', req.body);
+    const newEmployee = req.body.employee;
+    const {name, position, wage} = newEmployee;
+    if (!(name && position && wage)) {
+        res.sendStatus(400);
+        return;
+    }
+    const query = `INSERT INTO Employee
+                        (name, position, wage, is_current_employee)
+                            VALUES
+                                ($name, $position, $wage, $ice);`;
+    const values = {
+        $name: newEmployee.name,
+        $position: newEmployee.position,
+        $wage: newEmployee.wage,
+        $ice: 1
+    };
+
+    dbUtils.insertOne('employee', 'Employee', query, values, res, next);
+
+});
+
 
 module.exports = employeeRouter;

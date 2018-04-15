@@ -37,9 +37,26 @@ module.exports = {
             });
         })
     },
-    // One: (table, ...columns, ...values) => {
-
-    // },
+    insertOne: (dataType, table, query, values, res, next) => {
+        db.run(query, values,
+            function(err) {
+                if(err) {
+                    next(err);
+                } else {
+                    db.get(`SELECT * FROM ${table} WHERE id=${this.lastID};`,
+                        (err, data) => {
+                            if (err) {
+                                console.log('ERR retrieving >>>>', err);
+                                next(err);
+                            } else {
+                                // console.log('SUCCESS posting >>>>', employee);
+                                res.status(201).json({[dataType]:data});
+                            }
+                        })
+                }
+            } 
+        );    
+    },
     updateOne: (table, column, value) => {
 
     },
