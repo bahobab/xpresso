@@ -22,7 +22,6 @@ employeeRouter.get('/:id', (req, res,next) => {
 });
 
 employeeRouter.post('/', (req, res, next) => {
-    // console.log('>>>', req.body);
     const newEmployee = req.body.employee;
     const {name, position, wage} = newEmployee;
     if (!(name && position && wage)) {
