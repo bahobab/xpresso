@@ -24,10 +24,12 @@ employeeRouter.get('/:id', (req, res,next) => {
 employeeRouter.post('/', (req, res, next) => {
     const newEmployee = req.body.employee;
     const {name, position, wage} = newEmployee;
-    if (!(name && position && wage)) {
+
+    if (!dbUtils.isValid(name, position, wage)) {
         res.sendStatus(400);
         return;
     }
+
     const query = `INSERT INTO Employee
                         (name, position, wage, is_current_employee)
                             VALUES
@@ -41,6 +43,33 @@ employeeRouter.post('/', (req, res, next) => {
 
     dbUtils.insertOne('employee', 'Employee', query, values, res, next);
 
+});
+
+employeeRouter.put('/:id', (req, res, next) => {
+    const newEmployee = req.body.employee;
+    const employeeId = Number(req.params.id);
+    const {name, position, wage} = newEmployee;
+
+    if (!dbUtils.isValid(name, position, wage)) {
+        res.sendStatus(400);
+        return;
+    }
+
+    const query = `UPDATE Employee
+                        SET 
+                            name=$name,
+                            position=$position,
+                            wage=$wage
+                                WHERE
+                                    id=$id;`;
+    const values = {
+        $id: employeeId,
+        $name: newEmployee.name,
+        $position: newEmployee.position,
+        $wage: newEmployee.wage
+    };
+
+    dbUtils.updateOne('employee', 'Employee', 'id', query, values, res, next);
 });
 
 
