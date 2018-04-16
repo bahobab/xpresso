@@ -12,5 +12,14 @@ const db = new sqlite3.Database(process.env.TEST_DATABASE ||
                         }
                     });
 
+// timesheetRouter.get('/', (req, res, next) => {
+//     const employeeId = req.params.employeeId;
+//     const query = `SELECT *
+//                         FROM Employee
+//                             WHERE
+//                                 id=$id;`;
+//     const value = {$id: employeeId};
+
+// });
 
 module.exports = timesheetRouter;

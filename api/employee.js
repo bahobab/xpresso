@@ -16,15 +16,27 @@ const db = new sqlite3.Database(process.env.TEST_DATABASE || './database.sqlite'
     }
 });
 
-dbUtils.getAll(employeeRouter, '/', 'employees', 'Employee', 'is_current_employee', 1);
+employeeRouter.get('/', async (req,res, next) => {
+    const query = `SELECT *
+                        FROM
+                            Employee
+                                WHERE
+                                is_current_employee=1;`;
+    const selectAll = await dbUtils.getAll(db, query);
+    if (selectAll.err) {
+        next(selectAll.err);
+    } else {
+        res.status(200).json({employees:selectAll.data});        
+    }
+});
 
-dbUtils.routerParam(employeeRouter, 'Employee', 'employee');
+dbUtils.routerParam(db, employeeRouter, 'Employee', 'employee');
 
 employeeRouter.get('/:id', (req, res,next) => {
     res.status(200).json({employee:req.employee})
 });
 
-employeeRouter.post('/', (req, res, next) => {
+employeeRouter.post('/', async (req, res, next) => {
     const newEmployee = req.body.employee;
     const {name, position, wage} = newEmployee;
 
@@ -44,11 +56,21 @@ employeeRouter.post('/', (req, res, next) => {
         $ice: 1
     };
 
-    dbUtils.insertOne('employee', 'Employee', query, values, res, next);
+    const postResults = await dbUtils.insertOne(db, query, values);
+    if (postResults.err) {
+        next(postResults.err);
+    } else {
+        const selectResults = await dbUtils.selectOne(db, 'Employee', 'id', postResults.lastID);
+        if (selectResults.err) {
+            next(selectResults.err);
+        } else {
+            res.status(201).json({employee:selectResults.data});
+        }
+    }
 
 });
 
-employeeRouter.put('/:id', (req, res, next) => {
+employeeRouter.put('/:id', async (req, res, next) => {
     const newEmployee = req.body.employee;
     const employeeId = Number(req.params.id);
     const {name, position, wage} = newEmployee;
@@ -62,20 +84,32 @@ employeeRouter.put('/:id', (req, res, next) => {
                         SET 
                             name=$name,
                             position=$position,
-                            wage=$wage
+                            wage=$wage,
+                            is_current_employee=$ice
                                 WHERE
                                     id=$id;`;
     const values = {
         $id: employeeId,
         $name: newEmployee.name,
         $position: newEmployee.position,
-        $wage: newEmployee.wage
+        $wage: newEmployee.wage,
+        $ice: 1
     };
 
-    dbUtils.updateOne('employee', 'Employee', 'id', query, values, res, next);
+    const updateResults = await dbUtils.updateOne(db, query, values);
+    if (updateResults.err) {
+        next(updateResults.err);
+    } else {
+        const selectResults = await dbUtils.selectOne(db, 'Employee', 'id', employeeId);
+        if (selectResults.err) {
+            next(selectResults.err);
+        } else {
+            res.status(200).json({employee:selectResults.data});
+        }
+    }
 });
 
-employeeRouter.delete('/:id', (req, res, next) => {
+employeeRouter.delete('/:id', async (req, res, next) => {
     const employeeId = Number(req.params.id);
     const query = `UPDATE Employee
                         SET 
@@ -86,8 +120,17 @@ employeeRouter.delete('/:id', (req, res, next) => {
         $id: employeeId,
         $ice: 0
     };
-
-    dbUtils.updateOne('employee', 'Employee', 'id', query, values, res, next);
+    const updateResults = await dbUtils.updateOne(db, query, values);
+    if (updateResults.err) {
+        next(updateResults.err);
+    } else {
+        const selectResults = await dbUtils.selectOne(db, 'Employee', 'id', employeeId);                
+        if (selectResults.err) {
+            next(selectResults.err);
+        } else {
+            res.status(200).json({employee:selectResults.data});
+        }
+    }
 });
 
 module.exports = employeeRouter;

@@ -1,7 +1,7 @@
 // database operation utilities
 
-const sqlite3 = require('sqlite3');
-const db = new sqlite3.Database(process.env.TEST_DATABASE || './database.sqlite');
+// const sqlite3 = require('sqlite3');
+// const db = new sqlite3.Database(process.env.TEST_DATABASE || './database.sqlite');
 
 module.exports = {
     isValid: function(...args) {
@@ -10,20 +10,20 @@ module.exports = {
         // const fields = Array.prototype.slice.call(arguments);  // ES5
         return fields.every(element => !!element);
     },
-    getAll: (entityRouter, path, dataType, table, column, value) => {
-        entityRouter.get(path, (req, res, next) => {
-            const query = `SELECT * FROM ${table} WHERE ${column}=${value};`;
+    getAll: (db, query) => {
+        return new Promise(resolve => {        
             db.all(query, (err, data) => {
+                const results = {};
                 if (err) {
-                    next(err);
-                    return;
+                    results.err = err;
                 } else {
-                    res.status(200).json({[dataType]:data});
+                    results.data = data;
                 }
+                resolve(results);
             });
         });
     },
-    routerParam: (entityRouter, table, dataType) => {
+    routerParam: (db, entityRouter, table, dataType) => {
         entityRouter.param('id', (req, res, next, id) => {
             const query = `SELECT *
                             FROM ${table}
@@ -42,51 +42,65 @@ module.exports = {
             });
         })
     },
-    insertOne: (dataType, table, query, values, res, next) => {
-        db.run(query, values,
-            function(err) {
-                if(err) {
-                    next(err);
-                } else {
-                    selectOne(201, dataType, table, 'id', this.lastID, res, next);
-                    // db.get(`SELECT * FROM ${table} WHERE id=${this.lastID};`,
-                    //     (err, data) => {
-                    //         if (err) {
-                    //             next(err);
-                    //         } else {
-                    //             res.status(201).json({[dataType]:data});
-                    //         }
-                    //     });
-                }
-            } 
-        );    
+    insertOne: (db, query, values) => {
+        return new Promise(resolve => {
+            db.run(query, values,
+                function(err) {
+                    const results = {};
+                    if(err) {
+                        results.err = err;
+                    } else {
+                        results.lastID = this.lastID;
+                    }
+                    resolve(results);
+                });
+        });
     },
-    updateOne: (dataType, table, column, query, values, res, next) => {
-        db.run(query, values,
-            (err) => {
+    updateOne: (db, query, values) => {
+        return new Promise(resolve => {
+            db.run(query, values,  (err) => {
+                const results = {};                
                 if(err) {
-                    // console.log('ERR PUT >>>>', err);
-                    next(err);
-                } else {
-                    selectOne(200, dataType, table, column, values.$id, res, next);
+                    results.err = err;
                 }
-            } 
-        );
+                resolve(results);
+            });
+        });
     },
     deleteOne: (table, column, value) => {
 
-    }
-}
-
-function selectOne(statusCode, dataType, table, column, value, res, next) {
-    db.get(`SELECT * FROM ${table} WHERE ${column}=${value};`,
-        (err, data) => {
-            if (err) {
-                console.log('ERR PUT/SELECT >>>>', err);
-                next(err);
-            } else {
-                // console.log('SUCCESS PUT/SELECT >>>>', data);
-                res.status(statusCode).json({[dataType]:data});
-            }
+    },
+    selectOne: (db, table, column, value) => {
+        return new Promise((resolve) => {
+            db.get(`SELECT * FROM ${table} WHERE ${column}=${value};`,
+            (err, data) => {
+                var foundOne = {};
+                if (err) {
+                    foundOne.err = err;
+                } else {
+                    foundOne.data = data;
+                }
+                resolve(foundOne)
+            });
         });
-}
+    }
+
+} // end export object
+
+// function selectOne(statusCode, dataType, table, column, value, res, next) {
+//     const foundOne = {};
+//     db.get(`SELECT * FROM ${table} WHERE ${column}=${value};`,
+//         (err, data) => {
+//             if (err) {
+//                 // foundOne.err = err;
+//                 // return foundOne.err = err;
+//                 console.log('ERR PUT/SELECT >>>>', err);
+//                 next(err);
+//             } else {
+//                 foundOne.data = data;
+//                 // return foundOne.data;
+//                 // console.log('SUCCESS PUT/SELECT >>>>', data);
+//                 res.status(statusCode).json({[dataType]:data});
+//             }
+//         });
+// }
