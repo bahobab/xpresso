@@ -91,4 +91,74 @@ menuItemRouter.post('/', async (req, res, next) => {
 
 dbUtils.routerParam(db, menuItemRouter, 'MenuItem', 'menuItem');
 
+menuItemRouter.put('/:id', async (req, res,next) => {
+    const menuId = Number(req.params.menuId);
+    const menuItemId = Number(req.params.id);
+    const {name, description, inventory, price} = req.body.menuItem;
+    // made a mistake: was using req.menuItem instead
+
+    const query = `UPDATE
+                        MenuItem
+                    SET
+                        name=$name,
+                        description=$description,
+                        inventory=$inventory,
+                        price=$price
+                    WHERE
+                        id=$id;`;
+    const values = {
+        $id: menuItemId,
+        $name: name,
+        $description: description,
+        $inventory: inventory,
+        $price: price
+    }
+
+    if (!dbUtils.isValid(name, description, inventory, price)) {
+        res.sendStatus(400);
+        return;
+    }
+
+    const menuItemExists = await dbUtils.selectOne(db, 'MenuItem', 'id', menuItemId);
+    if (menuItemExists.err) {
+        next(menuItemExists.err);
+    } else {
+        if (!menuItemExists.data) {
+            res.sendStatus(404);
+        } else {
+            const updateResults = await dbUtils.updateOne(db, query, values);
+            if (updateResults.err) {
+                next(updateResults.err);
+            } else {
+                const updatedMenuItem = await dbUtils.selectOne(db, 'MenuItem', 'id', menuItemId);
+                if (updatedMenuItem.err) {
+                    next(updatedMenuItem.err);
+                } else {
+                    res.status(200).json({menuItem:updatedMenuItem.data});
+                }
+            }
+        }
+    }
+});
+
+menuItemRouter.delete('/:id', async (req, res, next) => {
+    const menuItemId = Number(req.params.id);
+    const menuItemExists = await dbUtils.selectOne(db, 'MenuItem', 'id', menuItemId);
+    if (menuItemExists.err) {
+        next(menuItemExists.err);
+    } else {
+        if (!menuItemExists.data) {
+            res.sendStatus(404);
+        } else {
+            deleteResults = await dbUtils.deleteOne(db, 'MenuItem', 'id', menuItemId);
+            if (deleteResults.err) {
+                next(deleteResults.err);
+            } else {
+                res.status(204).json({menuItem:menuItemExists.data});
+            }
+        }
+    }
+});
+
+
 module.exports = menuItemRouter;
