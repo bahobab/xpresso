@@ -2,10 +2,10 @@ const express = require('express');
 const sqlite3 = require('sqlite3');
 
 const dbUtils = require('./dbUtils');
-const menuitemRouter = require('./menuItem');
+const menuItemRouter = require('./menuItem');
 
 const menuRouter = express.Router();
-menuRouter.use('/:menuId/menu-items', menuitemRouter);
+menuRouter.use('/:menuId/menu-items', menuItemRouter);
 
 const db = new sqlite3.Database(process.env.TEST_DATABASE || './database.sqlite',
             (err) => {
@@ -16,66 +16,66 @@ const db = new sqlite3.Database(process.env.TEST_DATABASE || './database.sqlite'
                 }
             });
 
-menuRouter.get('/', async (req, res, next) => {
-    const query = `SELECT *
-                    FROM
-                        Menu;`;
-    const allMenu = await dbUtils.getAll(db, query);
-    if (allMenu.err) {
-        next(allMenu.err);
-    } else {
-        res.status(200).json({menus:allMenu.data});
-    }
-});
+// menuRouter.get('/', async (req, res, next) => {
+//     const query = `SELECT *
+//                     FROM
+//                         Menu;`;
+//     const allMenu = await dbUtils.getAll(db, query);
+//     if (allMenu.err) {
+//         next(allMenu.err);
+//     } else {
+//         res.status(200).json({menus:allMenu.data});
+//     }
+// });
 
-menuRouter.post('/', async (req, res, next) => {
-    // console.log('NEW MENU>>>>', req.body);
-    const newMenu = req.body.menu;
-    const {title} = newMenu;
+// menuRouter.post('/', async (req, res, next) => {
+//     // console.log('NEW MENU>>>>', req.body);
+//     const newMenu = req.body.menu;
+//     const {title} = newMenu;
 
-    if (!title) {
-        res.sendStatus(400);
-        return;
-    }
+//     if (!title) {
+//         res.sendStatus(400);
+//         return;
+//     }
 
-    const query = `INSERT
-                    INTO
-                        Menu
-                            (title)
-                        VALUES
-                            ($title);`;
-    const values = {
-        $title: title
-    }
+//     const query = `INSERT
+//                     INTO
+//                         Menu
+//                             (title)
+//                         VALUES
+//                             ($title);`;
+//     const values = {
+//         $title: title
+//     }
 
-    const postResults = await dbUtils.insertOne(db, query,values);
-    if (postResults.err) {
-        next(postResults.err);
-    } else {
-        const createdMenu = await dbUtils.selectOne(db, 'Menu', 'id', postResults.lastID);
-        if (createdMenu.err) {
-            next(createdMenu.err);
-        } else {
-            res.status(201).json({menu:createdMenu.data});
-        }
-    }
-});
+//     const postResults = await dbUtils.insertOne(db, query,values);
+//     if (postResults.err) {
+//         next(postResults.err);
+//     } else {
+//         const createdMenu = await dbUtils.selectOne(db, 'Menu', 'id', postResults.lastID);
+//         if (createdMenu.err) {
+//             next(createdMenu.err);
+//         } else {
+//             res.status(201).json({menu:createdMenu.data});
+//         }
+//     }
+// });
 
-dbUtils.routerParam(db, menuRouter, 'Menu', 'menu');
+// dbUtils.routerParam(db, menuRouter, 'Menu', 'menu');
 
-menuRouter.get('/:id', async (req, res, next) => {
-    const menuId = Number(req.params.id);
-    const menuExists = await dbUtils.selectOne(db, 'Menu', 'id', menuId);
-    if (menuExists.err) {
-        next(menuExists.err);
-    } else {
-        if (!menuExists.data) {
-            res.sendStatus(404);
-        } else {
-            res.status(200).json({menu:menuExists.data});
-        }
-    }
-});
+// menuRouter.get('/:id', async (req, res, next) => {
+//     const menuId = Number(req.params.id);
+//     const menuExists = await dbUtils.selectOne(db, 'Menu', 'id', menuId);
+//     if (menuExists.err) {
+//         next(menuExists.err);
+//     } else {
+//         if (!menuExists.data) {
+//             res.sendStatus(404);
+//         } else {
+//             res.status(200).json({menu:menuExists.data});
+//         }
+//     }
+// });
 
 // menuRouter.put('/:id', async (req, res, next) => {
 //     const menuId = Number(req.params.id);
@@ -123,30 +123,30 @@ menuRouter.get('/:id', async (req, res, next) => {
 //     }
 // });
 
-menuRouter.delete('/:id', async (req, res, next) => {
-    const menuId = Number(req.params.id);
+// menuRouter.delete('/:id', async (req, res, next) => {
+//     const menuId = Number(req.params.id);
 
-    const hasMenuItem = await dbUtils.selectOne(db, 'MenuItem', 'menu_id', menuId);
-    if (hasMenuItem.data) {
-        res.sendStatus(400);
-        return;
-    }
+//     const hasMenuItem = await dbUtils.selectOne(db, 'MenuItem', 'menu_id', menuId);
+//     if (hasMenuItem.data) {
+//         res.sendStatus(400);
+//         return;
+//     }
 
-    const menuExists = await dbUtils.selectOne(db, 'Menu', 'id', menuId);
-    if (menuExists.err) {
-        next(menuExists.err);
-    } else {
-        if (!menuExists.data) {
-            res.sendStatus(400)
-        } else {
-            const deleteResults = await dbUtils.deleteOne(db, 'Menu', 'id', menuId);
-            if (deleteResults.err) {
-                next(deleteResults.err);
-            } else {
-                res.status(204).json({menu:menuExists.data});
-            }
-        }
-    }
-});
+//     const menuExists = await dbUtils.selectOne(db, 'Menu', 'id', menuId);
+//     if (menuExists.err) {
+//         next(menuExists.err);
+//     } else {
+//         if (!menuExists.data) {
+//             res.sendStatus(400)
+//         } else {
+//             const deleteResults = await dbUtils.deleteOne(db, 'Menu', 'id', menuId);
+//             if (deleteResults.err) {
+//                 next(deleteResults.err);
+//             } else {
+//                 res.status(204).json({menu:menuExists.data});
+//             }
+//         }
+//     }
+// });
 
 module.exports = menuRouter;
