@@ -70,20 +70,36 @@ module.exports = {
     deleteOne: (table, column, value) => {
 
     },
-    selectOne: (db, table, column, value) => {
-        return new Promise((resolve) => {
+    selectOne: (db, table, column, value) =>{
+        return new Promise((resolve, reject) => {
             db.get(`SELECT * FROM ${table} WHERE ${column}=${value};`,
             (err, data) => {
                 var foundOne = {};
                 if (err) {
                     foundOne.err = err;
+                    // reject(foundOne);
                 } else {
-                    foundOne.data = data;
+                    foundOne.data = data;                   
                 }
-                resolve(foundOne)
+                resolve(foundOne); 
             });
         });
-    }
+    },
+    // elementExists: function (db, table, column, value) {
+    //     return new Promise(resolve => {
+    //         `SELECT * FROM ${table} WHERE ${column}=${value};`,
+    //         (err, data) => {
+    //             var foundOne = {};
+    //             if (err) {
+    //                 foundOne.err = err;
+    //                 // reject(foundOne);
+    //             } else {
+    //                 foundOne.data = data;                   
+    //             }
+    //             resolve(foundOne); 
+    //         };
+    //     }); 
+    // }
 
 } // end export object
 

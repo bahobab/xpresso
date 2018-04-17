@@ -101,5 +101,55 @@ timesheetRouter.post('/', async (req, res, next) => {
 
 dbUtils.routerParam(db, timesheetRouter, 'Timesheet', 'timesheet');
 
+timesheetRouter.put('/:id', async (req, res, next) => {
+    const employeeId = Number(req.params.employeeId);
+    const timesheetId = Number(req.params.id);
+    const employeeUpdate = req.body.timesheet;
+    const {hours, rate, date} = employeeUpdate;
+
+    if (!dbUtils.isValid(hours, rate, date)) {
+        res.sendStatus(400);
+        return;
+    }
+
+    const values = {
+        $id: timesheetId,
+        $hours: hours,
+        $rate: rate,
+        $date: date
+    };
+
+    const timeSheetQuery = `UPDATE Timesheet
+                            SET
+                                hours=$hours,
+                                rate=$rate,
+                                date=$date
+                            WHERE
+                                id=$id;`;
+    
+    const employeeExists = await dbUtils.selectOne(db, 'Employee', 'id', employeeId);
+    if (!employeeExists.data) {
+        res.sendStatus(404);
+    } else {
+        const timesheetExists = await dbUtils.selectOne(db, 'Timesheet', 'id', timesheetId);
+        if (!timesheetExists.data) {
+            res.sendStatus(400);
+            return;
+        } else {
+            const timesheetUpdate = await dbUtils.updateOne(db, timeSheetQuery, values);
+            if (timesheetUpdate.err) {
+                next(timesheetUpdate.err);
+            } else {
+                const updatedTimesheet = await dbUtils.selectOne(db, 'Timesheet', 'id', timesheetId);
+                if (updatedTimesheet.err) {
+                    next(updatedTimesheet.err);
+                } else {
+                    res.status(200).json({timesheet:updatedTimesheet.data});
+                }
+            }
+        }
+    }
+});
+
 
 module.exports = timesheetRouter;
