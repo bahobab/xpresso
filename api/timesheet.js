@@ -112,7 +112,10 @@ timesheetRouter.put('/:id', async (req, res, next) => {
         return;
     }
 
-    const values = {
+    // the number of properties MUST be equal to
+    // the number of variables used in the query
+    // otherwise ERROR: "SQLITE_RANGE: bind or lumn index out of range" 
+    const values = { 
         $id: timesheetId,
         $hours: hours,
         $rate: rate,
@@ -151,5 +154,23 @@ timesheetRouter.put('/:id', async (req, res, next) => {
     }
 });
 
+timesheetRouter.delete('/:id', async (req, res, next) => {
+    const timesheetId = Number(req.params.id);
 
+    const currentTimesheet = await dbUtils.selectOne(db, 'Timesheet', 'id', timesheetId);
+    if (currentTimesheet.err) {
+        next(currentTimesheet.err);
+    } else {
+        if (!currentTimesheet.data) {
+            res.sendStatus(404);
+        } else {
+            const deleteResults = await dbUtils.deleteOne(db, 'Timesheet', 'id', timesheetId);
+            if (deleteResults.err) {
+                next(deleteResults.err);
+            } else {
+                res.status(204).json({timesheet:currentTimesheet.data});
+            }
+        }
+    }
+});
 module.exports = timesheetRouter;

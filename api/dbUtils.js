@@ -67,8 +67,18 @@ module.exports = {
             });
         });
     },
-    deleteOne: (table, column, value) => {
-
+    deleteOne: (db, table, column, value) => {
+        return new Promise(resolve =>{
+            db.run(
+                `DELETE
+                FROM
+                    ${table}
+                WHERE
+                    ${column}=${value};`,
+                err => {
+                    resolve({results:err});
+            });
+        });
     },
     selectOne: (db, table, column, value) =>{
         return new Promise((resolve, reject) => {
