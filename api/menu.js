@@ -7,20 +7,20 @@ const menuItemRouter = require('./menuItem');
 const menuRouter = express.Router();
 menuRouter.use('/:menuId/menu-items', menuItemRouter);
 
-const db = new sqlite3.Database(process.env.TEST_DATABASE || './database.sqlite',
-            (err) => {
-                if (err) {
-                    console.log('Error connecting/opening database Menu...', err);
-                } else {
-                    console.log('Successfully conected to in-memory database - Menu...')
-                }
-            });
+// const db = new sqlite3.Database(process.env.TEST_DATABASE || './database.sqlite',
+//             (err) => {
+//                 if (err) {
+//                     console.log('Error connecting/opening database Menu...', err);
+//                 } else {
+//                     console.log('Successfully conected to in-memory database - Menu...')
+//                 }
+//             });
 
 menuRouter.get('/', async (req, res, next) => {
     const query = `SELECT *
                     FROM
                         Menu;`;
-    const allMenu = await dbUtils.getAll(db, query);
+    const allMenu = await dbUtils.getAll(query);
     if (allMenu.err) {
         next(allMenu.err);
     } else {
@@ -47,11 +47,11 @@ menuRouter.post('/', async (req, res, next) => {
         $title: title
     }
 
-    const postResults = await dbUtils.insertOne(db, query,values);
+    const postResults = await dbUtils.insertOne(query,values);
     if (postResults.err) {
         next(postResults.err);
     } else {
-        const createdMenu = await dbUtils.selectOne(db, 'Menu', 'id', postResults.lastID);
+        const createdMenu = await dbUtils.selectOne('Menu', 'id', postResults.lastID);
         if (createdMenu.err) {
             next(createdMenu.err);
         } else {
@@ -60,11 +60,11 @@ menuRouter.post('/', async (req, res, next) => {
     }
 });
 
-dbUtils.routerParam(db, menuRouter, 'Menu', 'menu');
+dbUtils.routerParam(menuRouter, 'Menu', 'menu');
 
 menuRouter.get('/:id', async (req, res, next) => {
     const menuId = Number(req.params.id);
-    const menuExists = await dbUtils.selectOne(db, 'Menu', 'id', menuId);
+    const menuExists = await dbUtils.selectOne('Menu', 'id', menuId);
     if (menuExists.err) {
         next(menuExists.err);
     } else {
@@ -97,18 +97,18 @@ menuRouter.put('/:id', async (req, res, next) => {
         $title: title
     };
 
-    const menuExists = await dbUtils.selectOne(db, 'Menu', 'id', menuId);
+    const menuExists = await dbUtils.selectOne('Menu', 'id', menuId);
     if (menuExists.err) {
         next(menuExists.err);
     } else {
         if (!menuExists.data) {
             res.sendStatus(400);
         } else {
-            const updateResults = await dbUtils.updateOne(db, query, values);
+            const updateResults = await dbUtils.updateOne(query, values);
             if (updateResults.err) {
                 next(updateResults.err);
             } else {
-                const updatedMenu = await dbUtils.selectOne(db, 'Menu', 'id', menuId);
+                const updatedMenu = await dbUtils.selectOne('Menu', 'id', menuId);
                 if (updatedMenu.err) {
                     next(updatedMenu.err);
                 } else {
@@ -122,20 +122,20 @@ menuRouter.put('/:id', async (req, res, next) => {
 menuRouter.delete('/:id', async (req, res, next) => {
     const menuId = Number(req.params.id);
 
-    const hasMenuItem = await dbUtils.selectOne(db, 'MenuItem', 'menu_id', menuId);
+    const hasMenuItem = await dbUtils.selectOne('MenuItem', 'menu_id', menuId);
     if (hasMenuItem.data) {
         res.sendStatus(400);
         return;
     }
 
-    const menuExists = await dbUtils.selectOne(db, 'Menu', 'id', menuId);
+    const menuExists = await dbUtils.selectOne('Menu', 'id', menuId);
     if (menuExists.err) {
         next(menuExists.err);
     } else {
         if (!menuExists.data) {
             res.sendStatus(400)
         } else {
-            const deleteResults = await dbUtils.deleteOne(db, 'Menu', 'id', menuId);
+            const deleteResults = await dbUtils.deleteOne('Menu', 'id', menuId);
             if (deleteResults.err) {
                 next(deleteResults.err);
             } else {
