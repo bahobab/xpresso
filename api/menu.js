@@ -7,20 +7,11 @@ const menuItemRouter = require('./menuItem');
 const menuRouter = express.Router();
 menuRouter.use('/:menuId/menu-items', menuItemRouter);
 
-// const db = new sqlite3.Database(process.env.TEST_DATABASE || './database.sqlite',
-//             (err) => {
-//                 if (err) {
-//                     console.log('Error connecting/opening database Menu...', err);
-//                 } else {
-//                     console.log('Successfully conected to in-memory database - Menu...')
-//                 }
-//             });
+// ************** begin routes implementation ***************
 
 menuRouter.get('/', async (req, res, next) => {
-    const query = `SELECT *
-                    FROM
-                        Menu;`;
-    const allMenu = await dbUtils.getAll(query);
+   
+    const allMenu = await dbUtils.getAll('Menu');
     if (allMenu.err) {
         next(allMenu.err);
     } else {
@@ -37,17 +28,11 @@ menuRouter.post('/', async (req, res, next) => {
         return;
     }
 
-    const query = `INSERT
-                    INTO
-                        Menu
-                            (title)
-                        VALUES
-                            ($title);`;
     const values = {
         $title: title
     }
 
-    const postResults = await dbUtils.insertOne(query,values);
+    const postResults = await dbUtils.insertOne('Menu', values);
     if (postResults.err) {
         next(postResults.err);
     } else {
@@ -86,16 +71,11 @@ menuRouter.put('/:id', async (req, res, next) => {
         return;
     }
 
-    const query = `UPDATE
-                        Menu
-                    SET
-                        title=$title
-                    WHERE
-                        id=$id;`;
     const values = {
-        $id: menuId,
+        // $id: menuId,
         $title: title
     };
+    const predicate = `id=${menuId};`
 
     const menuExists = await dbUtils.selectOne('Menu', 'id', menuId);
     if (menuExists.err) {
@@ -104,7 +84,7 @@ menuRouter.put('/:id', async (req, res, next) => {
         if (!menuExists.data) {
             res.sendStatus(400);
         } else {
-            const updateResults = await dbUtils.updateOne(query, values);
+            const updateResults = await dbUtils.updateOne('Menu', values, predicate);
             if (updateResults.err) {
                 next(updateResults.err);
             } else {

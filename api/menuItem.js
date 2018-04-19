@@ -5,14 +5,10 @@ const menuItemRouter = express.Router({mergeParams: true});
 
 const dbUtils = require('./dbUtils');
 
+// ************** begin routes implementation ***************
+
 menuItemRouter.get('/', async (req, res,next) => {
     const menuId = Number(req.params.menuId);
-    const queryMenuItem = `SELECT *
-                            FROM
-                                MenuItem
-                            WHERE
-                                menu_id=${menuId};`;
-    const value = {$menuId: menuId};
 
     const menuExists = await dbUtils.selectOne("Menu", 'id', menuId);
     if (menuExists.err) {
@@ -22,7 +18,7 @@ menuItemRouter.get('/', async (req, res,next) => {
             res.sendStatus(404);
             return;
         } else {
-            const allMenuItems = await dbUtils.getAll(queryMenuItem);            
+            const allMenuItems = await dbUtils.getAll('MenuItem', 'menu_id', menuId);            
             if (allMenuItems.err) {
                 next(allMenuItems.err);
             } else {
@@ -43,13 +39,6 @@ menuItemRouter.post('/', async (req, res, next) => {
         return;
     }
 
-    const query = `INSERT
-                    INTO
-                        MenuItem
-                        (name, description, inventory, price, menu_id)
-                    VALUES
-                        ($name, $description, $inventory, $price, $menu_id);`;
-    
     const values = {
         $name: name,
         $description: description,
@@ -65,7 +54,7 @@ menuItemRouter.post('/', async (req, res, next) => {
         if (!menuExists.data) {
             res.sendStatus(404);
         } else {
-            const postResults = await dbUtils.insertOne(query, values);
+            const postResults = await dbUtils.insertOne('MenuItem', values);
             if (postResults.err) {
                 next(postResults.err);
             } else {
@@ -88,22 +77,14 @@ menuItemRouter.put('/:id', async (req, res,next) => {
     const {name, description, inventory, price} = req.body.menuItem;
     // made a mistake: was using req.menuItem instead
 
-    const query = `UPDATE
-                        MenuItem
-                    SET
-                        name=$name,
-                        description=$description,
-                        inventory=$inventory,
-                        price=$price
-                    WHERE
-                        id=$id;`;
     const values = {
-        $id: menuItemId,
+        // $id: menuItemId,
         $name: name,
         $description: description,
         $inventory: inventory,
         $price: price
-    }
+    };
+    const predicate = `id=${menuItemId};`;
 
     if (!dbUtils.isValid(name, description, inventory, price)) {
         res.sendStatus(400);
@@ -117,7 +98,7 @@ menuItemRouter.put('/:id', async (req, res,next) => {
         if (!menuItemExists.data) {
             res.sendStatus(404);
         } else {
-            const updateResults = await dbUtils.updateOne(query, values);
+            const updateResults = await dbUtils.updateOne('MenuItem', values, predicate);
             if (updateResults.err) {
                 next(updateResults.err);
             } else {

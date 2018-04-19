@@ -1,18 +1,38 @@
 // database operation utilities
 
 const sqlite3 = require('sqlite3');
-const db = new sqlite3.Database(process.env.TEST_DATABASE || './database.sqlite');
+const db = new sqlite3.Database(process.env.TEST_DATABASE || './database.sqlite',
+            err => {
+                if (err) {
+                    console.log('Error connecting to in-memory database...');
+                } else {
+                    console.log('Successfully connected to in-memeory database...');
+                }
+            });
 
 module.exports = {
   isValid: function(...args) {
-    // const fields = Array.from(arguments); // ES 2015 - no arguments with =>
     const fields = [...args];
-    // const fields = Array.prototype.slice.call(arguments);  // ES5
     return fields.every(element => !!element);
+    // const fields = Array.from(arguments); // ES 2015 - no arguments with =>
+    // const fields = Array.prototype.slice.call(arguments);  // ES5    
   },
 
-  getAll: (query) => {
+  getAll: (table, column, value) => {
     return new Promise((resolve, reject) => {
+        let query;
+        if (table === 'Menu') {
+            query =  `SELECT *
+                        FROM
+                            ${table}`;
+        } else {
+            query =  `SELECT *
+                        FROM
+                            ${table}
+                        WHERE
+                            ${column}=${value}`;
+        }
+    
       db.all(query, (err, data) => {
         const results = {};
         if (err) {
@@ -48,8 +68,18 @@ module.exports = {
     });
   },
 
-  insertOne: (query, values) => {
+  insertOne: (table, values) => {
     return new Promise((resolve, reject) => {
+        columnString = Object.keys(values).map(key => key.substr(1))
+                            .join();
+        const paramNames = Object.keys(values).join();
+        const query = `INSERT 
+                    INTO 
+                        ${table}
+                        (${columnString})
+                    VALUES
+                        (${paramNames});`; 
+
       db.run(query, values, function(err) {
         const results = {};
         if (err) {
@@ -59,13 +89,20 @@ module.exports = {
           results.lastID = this.lastID;
           resolve(results);
         }
-        // resolve(results);
       });
     });
   },
 
-  updateOne: (query, values) => {
-    return new Promise(resolve => {
+  updateOne: (table, values, where) => {
+    return new Promise((resolve, reject) => {
+
+        const setArray = Object.keys(values).map(key => `${key.substr(1)}=${key}`);
+        const setValues = setArray.join();        
+        const query = `UPDATE ${table}
+                            SET
+                                ${setValues}
+                            WHERE
+                                ${where};`;
       db.run(query, values, err => {
         const results = {};
         if (err) {
@@ -96,7 +133,7 @@ module.exports = {
       );
     });
   },
-  
+
   selectOne: (table, column, value) => {
     return new Promise((resolve, reject) => {
       db.get(
@@ -116,20 +153,3 @@ module.exports = {
   }
 }; // end export object
 
-// function selectOne(statusCode, dataType, table, column, value, res, next) {
-//     const foundOne = {};
-//     db.get(`SELECT * FROM ${table} WHERE ${column}=${value};`,
-//         (err, data) => {
-//             if (err) {
-//                 // foundOne.err = err;
-//                 // return foundOne.err = err;
-//                 console.log('ERR PUT/SELECT >>>>', err);
-//                 next(err);
-//             } else {
-//                 foundOne.data = data;
-//                 // return foundOne.data;
-//                 // console.log('SUCCESS PUT/SELECT >>>>', data);
-//                 res.status(statusCode).json({[dataType]:data});
-//             }
-//         });
-// }

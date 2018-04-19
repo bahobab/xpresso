@@ -4,33 +4,23 @@ const sqlite3 = require('sqlite3');
 
 const dbUtils = require('./dbUtils');
 
-timesheetRouter.get('/', async (req, res, next) => {
-    const employeeId = req.params.employeeId;
-    const queryEmployee = `SELECT *
-                            FROM 
-                                Employee
-                            WHERE
-                                id=$id;`;
-    const value = {$id: employeeId};
-    
-    const queryTimeSheet = `SELECT *
-                            FROM
-                                Timesheet
-                            WHERE
-                                employee_id=${employeeId};`;
+// ************** begin routes implementation ***************
 
-    const selectOneEmployee = await dbUtils.selectOne('Employee', 'id', employeeId);
-    if (selectOneEmployee.err) {
-        next(selectOneEmployee.err);
+timesheetRouter.get('/', async (req, res, next) => {
+    const employeeId = Number(req.params.employeeId);
+    
+    const employeeExixts = await dbUtils.selectOne('Employee', 'id', employeeId);
+    if (employeeExixts.err) {
+        next(employeeExixts.err);
     } else {
-        if (!selectOneEmployee.data) {
+        if (!employeeExixts.data) {
             res.sendStatus(404);            
         } else {
-            const selectAllTimesheet = await dbUtils.getAll(queryTimeSheet);
-            if (selectAllTimesheet.err) {
-                next(selectAllTimesheet.err);
+            const allTimesheet = await dbUtils.getAll('Timesheet', 'employee_id', employeeId);
+            if (allTimesheet.err) {
+                next(allTimesheet.err);
             } else {
-                res.status(200).json({timesheets:selectAllTimesheet.data});
+                res.status(200).json({timesheets:allTimesheet.data});
             }
         }
     }
@@ -46,21 +36,6 @@ timesheetRouter.post('/', async (req, res, next) => {
         return;
     }
 
-    const postQuery = `INSERT INTO
-                        Timesheet
-                            (
-                                hours,
-                                rate,
-                                date,
-                                employee_id
-                            )
-                    VALUES
-                        (
-                            $hours,
-                            $rate,
-                            $date,
-                            $employee_id
-                        );`;
     const values = {
         $hours: hours,
         $rate: rate,
@@ -75,7 +50,7 @@ timesheetRouter.post('/', async (req, res, next) => {
         if (!selectOneEmployee.data) {
             res.sendStatus(404);
         } else {
-            const postResults = await dbUtils.insertOne(postQuery, values);
+            const postResults = await dbUtils.insertOne('Timesheet', values);
             if (postResults.err) {
                 next(err);
             } else {
@@ -107,19 +82,11 @@ timesheetRouter.put('/:id', async (req, res, next) => {
     // the number of variables used in the query
     // otherwise ERROR: "SQLITE_RANGE: bind or lumn index out of range" 
     const values = { 
-        $id: timesheetId,
         $hours: hours,
         $rate: rate,
         $date: date
     };
-
-    const timeSheetQuery = `UPDATE Timesheet
-                            SET
-                                hours=$hours,
-                                rate=$rate,
-                                date=$date
-                            WHERE
-                                id=$id;`;
+    const predicate = `id=${timesheetId};`;
     
     const employeeExists = await dbUtils.selectOne('Employee', 'id', employeeId);
     if (!employeeExists.data) {
@@ -130,7 +97,7 @@ timesheetRouter.put('/:id', async (req, res, next) => {
             res.sendStatus(400);
             return;
         } else {
-            const timesheetUpdate = await dbUtils.updateOne(timeSheetQuery, values);
+            const timesheetUpdate = await dbUtils.updateOne('Timesheet', values, predicate);
             if (timesheetUpdate.err) {
                 next(timesheetUpdate.err);
             } else {
