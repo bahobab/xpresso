@@ -9,7 +9,7 @@ const dbUtils = require('./dbUtils');
 timesheetRouter.get('/', async (req, res, next) => {
     const employeeId = Number(req.params.employeeId);
     
-    const employeeExixts = await dbUtils.selectOne('Employee', 'id', employeeId);
+    const employeeExixts = await dbUtils.selectOne('Employee', `id=${employeeId}`);
     if (employeeExixts.err) {
         next(employeeExixts.err);
     } else {
@@ -43,7 +43,7 @@ timesheetRouter.post('/', async (req, res, next) => {
         $employee_id: employeeId
     };
     
-    const selectOneEmployee = await dbUtils.selectOne('Employee', 'id', employeeId);
+    const selectOneEmployee = await dbUtils.selectOne('Employee', `id=${employeeId}`);
     if (selectOneEmployee.err) {
         next(selectOneEmployee.err);
     } else {
@@ -54,7 +54,7 @@ timesheetRouter.post('/', async (req, res, next) => {
             if (postResults.err) {
                 next(err);
             } else {
-                const createdTimesheet = await dbUtils.selectOne('Timesheet', 'id', postResults.lastID);
+                const createdTimesheet = await dbUtils.selectOne('Timesheet', `id=${postResults.lastID}`);
                 if (createdTimesheet.err) {
                     next (createdTimesheet.err);
                 } else {
@@ -88,11 +88,11 @@ timesheetRouter.put('/:id', async (req, res, next) => {
     };
     const predicate = `id=${timesheetId};`;
     
-    const employeeExists = await dbUtils.selectOne('Employee', 'id', employeeId);
+    const employeeExists = await dbUtils.selectOne('Employee', `id=${employeeId}`);
     if (!employeeExists.data) {
         res.sendStatus(404);
     } else {
-        const timesheetExists = await dbUtils.selectOne('Timesheet', 'id', timesheetId);
+        const timesheetExists = await dbUtils.selectOne('Timesheet', `id=${timesheetId}`);
         if (!timesheetExists.data) {
             res.sendStatus(400);
             return;
@@ -101,7 +101,7 @@ timesheetRouter.put('/:id', async (req, res, next) => {
             if (timesheetUpdate.err) {
                 next(timesheetUpdate.err);
             } else {
-                const updatedTimesheet = await dbUtils.selectOne('Timesheet', 'id', timesheetId);
+                const updatedTimesheet = await dbUtils.selectOne('Timesheet', `id=${timesheetId}`);
                 if (updatedTimesheet.err) {
                     next(updatedTimesheet.err);
                 } else {
@@ -114,15 +114,16 @@ timesheetRouter.put('/:id', async (req, res, next) => {
 
 timesheetRouter.delete('/:id', async (req, res, next) => {
     const timesheetId = Number(req.params.id);
+    const predicate = `id = ${timesheetId}`;
 
-    const currentTimesheet = await dbUtils.selectOne('Timesheet', 'id', timesheetId);
+    const currentTimesheet = await dbUtils.selectOne('Timesheet', `id=${timesheetId}`);
     if (currentTimesheet.err) {
         next(currentTimesheet.err);
     } else {
         if (!currentTimesheet.data) {
             res.sendStatus(404);
         } else {
-            const deleteResults = await dbUtils.deleteOne('Timesheet', 'id', timesheetId);
+            const deleteResults = await dbUtils.deleteOne('Timesheet', predicate);
             if (deleteResults.err) {
                 next(deleteResults.err);
             } else {

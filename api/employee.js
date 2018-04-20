@@ -19,10 +19,6 @@ employeeRouter.get('/', async (req,res, next) => {
     }
 });
 
-employeeRouter.get('/:id', (req, res,next) => {
-    res.status(200).json({employee:req.employee})
-});
-
 employeeRouter.post('/', async (req, res, next) => {
     const newEmployee = req.body.employee;
     const {name, position, wage} = newEmployee;
@@ -43,7 +39,7 @@ employeeRouter.post('/', async (req, res, next) => {
     if (postResults.err) {
         next(postResults.err);
     } else {
-        const selectResults = await dbUtils.selectOne('Employee', 'id', postResults.lastID);
+        const selectResults = await dbUtils.selectOne('Employee', `id=${postResults.lastID}`);
         if (selectResults.err) {
             next(selectResults.err);
         } else {
@@ -53,6 +49,10 @@ employeeRouter.post('/', async (req, res, next) => {
 });
 
 dbUtils.routerParam(employeeRouter, 'Employee', 'employee');
+
+employeeRouter.get('/:id', (req, res,next) => {
+    res.status(200).json({employee:req.employee})
+});
 
 employeeRouter.put('/:id', async (req, res, next) => {
     const newEmployee = req.body.employee;
@@ -77,7 +77,7 @@ employeeRouter.put('/:id', async (req, res, next) => {
     if (updateResults.err) {
         next(updateResults.err);
     } else {
-        const selectResults = await dbUtils.selectOne('Employee', 'id', employeeId);
+        const selectResults = await dbUtils.selectOne('Employee', `id=${employeeId}`);
         if (selectResults.err) {
             next(selectResults.err);
         } else {

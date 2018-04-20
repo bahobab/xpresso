@@ -12,6 +12,7 @@ const db = new sqlite3.Database(process.env.TEST_DATABASE || './database.sqlite'
 
 module.exports = {
   isValid: function(...args) {
+    // checks that required fields are valid
     const fields = [...args];
     return fields.every(element => !!element);
     // const fields = Array.from(arguments); // ES 2015 - no arguments with =>
@@ -19,6 +20,7 @@ module.exports = {
   },
 
   getAll: (table, column, value) => {
+    // return all elements of a given table
     return new Promise((resolve, reject) => {
         let query;
         if (table === 'Menu') {
@@ -48,11 +50,13 @@ module.exports = {
     });
   },
 
-  routerParam: (entityRouter, table, dataType) => {
-    entityRouter.param('id', (req, res, next, id) => {
+  routerParam: (entityRouter, table, dataType, id = 'id') => {
+    // routerParam: (entityRouter, masterInfo = null, table, dataType) => {
+    // process params for a given route. Return data on the rquest object
+    entityRouter.param(id, (req, res, next, id) => {
       const query = `SELECT *
-                            FROM ${table}
-                                WHERE id = ${Number(id)};`;
+                    FROM ${table}
+                    WHERE id = ${Number(id)};`;
       db.get(query, (err, data) => {
         if (err) {
           next(err);
@@ -69,8 +73,10 @@ module.exports = {
   },
 
   insertOne: (table, values) => {
+    // Insert a row in given table. Return a promise
     return new Promise((resolve, reject) => {
-        columnString = Object.keys(values).map(key => key.substr(1))
+        columnString = Object.keys(values)
+                        .map(key => key.substr(1))
                             .join();
         const paramNames = Object.keys(values).join();
         const query = `INSERT 
@@ -94,9 +100,10 @@ module.exports = {
   },
 
   updateOne: (table, values, where) => {
+    // Update a row in given table. Return a promise
     return new Promise((resolve, reject) => {
-
-        const setArray = Object.keys(values).map(key => `${key.substr(1)}=${key}`);
+        const setArray = Object.keys(values)
+                        .map(key => `${key.substr(1)}=${key}`);
         const setValues = setArray.join();        
         const query = `UPDATE ${table}
                             SET
@@ -114,15 +121,16 @@ module.exports = {
     });
   },
 
-  deleteOne: (table, column, value) => {
-    return new Promise(resolve => {
+  deleteOne: (table, where) => {
+    // Delete a row in given table. Return a promise
+    return new Promise((resolve, reject) => {
         const results = {};
         db.run(
         `DELETE
                 FROM
                     ${table}
                 WHERE
-                    ${column}=${value};`,
+                    ${where};`,
         err => {
             if (err) {
                 results.err = err;
@@ -134,19 +142,20 @@ module.exports = {
     });
   },
 
-  selectOne: (table, column, value) => {
+  selectOne: (table, where) => {
+    // select a row in given table. Return a promise
     return new Promise((resolve, reject) => {
       db.get(
-        `SELECT * FROM ${table} WHERE ${column}=${value};`,
+        `SELECT * FROM ${table} WHERE ${where};`,
         (err, data) => {
           var foundOne = {};
           if (err) {
             foundOne.err = err;
-            // reject(foundOne);
+            reject(foundOne);
           } else {
             foundOne.data = data;
+            resolve(foundOne);
           }
-          resolve(foundOne);
         }
       );
     });

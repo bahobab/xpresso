@@ -1,6 +1,5 @@
 const express = require('express');
 const sqlite3 = require('sqlite3');
-
 const menuItemRouter = express.Router({mergeParams: true});
 
 const dbUtils = require('./dbUtils');
@@ -10,7 +9,7 @@ const dbUtils = require('./dbUtils');
 menuItemRouter.get('/', async (req, res,next) => {
     const menuId = Number(req.params.menuId);
 
-    const menuExists = await dbUtils.selectOne("Menu", 'id', menuId);
+    const menuExists = await dbUtils.selectOne("Menu", `id=${menuId}`);
     if (menuExists.err) {
         next(menuExists.err);
     } else {
@@ -47,7 +46,9 @@ menuItemRouter.post('/', async (req, res, next) => {
         $menu_id: menuId
     };
 
-    const menuExists = await dbUtils.selectOne('Menu', 'id', menuId);
+    // console.log('MENU ID>>>', menuId);
+    const menuExists = await dbUtils.selectOne('Menu', `id=${menuId}`);
+    // console.log('MENU EXISTS>>>', menuExists);
     if (menuExists.err) {
         next(menuExists.err);
     } else {
@@ -58,7 +59,7 @@ menuItemRouter.post('/', async (req, res, next) => {
             if (postResults.err) {
                 next(postResults.err);
             } else {
-                const createdMenuItem = await dbUtils.selectOne('MenuItem', 'id', postResults.lastID);
+                const createdMenuItem = await dbUtils.selectOne('MenuItem', `id=${postResults.lastID}`);
                 if (createdMenuItem.err) {
                     next(createdMenuItem.err);
                 } else {
@@ -91,7 +92,7 @@ menuItemRouter.put('/:id', async (req, res,next) => {
         return;
     }
 
-    const menuItemExists = await dbUtils.selectOne('MenuItem', 'id', menuItemId);
+    const menuItemExists = await dbUtils.selectOne('MenuItem', `id=${menuItemId}`);
     if (menuItemExists.err) {
         next(menuItemExists.err);
     } else {
@@ -102,7 +103,7 @@ menuItemRouter.put('/:id', async (req, res,next) => {
             if (updateResults.err) {
                 next(updateResults.err);
             } else {
-                const updatedMenuItem = await dbUtils.selectOne('MenuItem', 'id', menuItemId);
+                const updatedMenuItem = await dbUtils.selectOne('MenuItem', `id=${menuItemId}`);
                 if (updatedMenuItem.err) {
                     next(updatedMenuItem.err);
                 } else {
@@ -115,6 +116,8 @@ menuItemRouter.put('/:id', async (req, res,next) => {
 
 menuItemRouter.delete('/:id', async (req, res, next) => {
     const menuItemId = Number(req.params.id);
+    const predicate = `id = ${menuItemId}`;
+
     const menuItemExists = await dbUtils.selectOne('MenuItem', 'id', menuItemId);
     if (menuItemExists.err) {
         next(menuItemExists.err);
@@ -122,7 +125,7 @@ menuItemRouter.delete('/:id', async (req, res, next) => {
         if (!menuItemExists.data) {
             res.sendStatus(404);
         } else {
-            deleteResults = await dbUtils.deleteOne('MenuItem', 'id', menuItemId);
+            deleteResults = await dbUtils.deleteOne('MenuItem', predicate);
             if (deleteResults.err) {
                 next(deleteResults.err);
             } else {
